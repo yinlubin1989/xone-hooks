@@ -23,7 +23,7 @@ function generateSignedUrl(accessToken, secret) {
     return signedUrl;
 }
 
-function sendDingMessage() {
+function sendDingMessage(payload) {
     // 调用方法
     const accessToken = 'b8350a5eeedbcee546b9feea67e858d5afd6862da7387e3766304a8973fc8211'; // 替换为你的access_token
     const secret = 'SEC4b3fa97b85c629df0ee50211367c2514ab176be8927a17a389cb4db82c936e90'; // 替换为你的secret
@@ -35,7 +35,7 @@ function sendDingMessage() {
     const message = {
         "msgtype": "markdown",
         "markdown": {
-            "title":"杭州天气",
+            "title": payload.title,
             "text": `![screenshot](${img})`
         }
     };
@@ -58,21 +58,20 @@ app.post('*', (req, res) => {
     if (!req.body?.text?.content) {
         res.send('null');;
     }
-    const data = req.body.text.content;
-    const lines = data.split('\n');
-    const result = lines.map(line => {
-        const match = line.match(/^(\w+)：(.+)$/);
+    const lines = req.body.text.content.split('\n');
+    const result = lines.splice(1).map(line => {
+        const match = line.split('：');
         if (match) {
-            return { [match[1]]: match[2] };
+            return { [match[0]]: match[1] };
         }
         return {};
     }).reduce((acc, obj) => {
         return { ...acc, ...obj };
     }, {});
+    result.title = lines[0]
+    sendDingMessage(result);
 
-    console.log(result);
-
-    res.send('Hello World!');
+    res.send('ok');
 });
 
 
