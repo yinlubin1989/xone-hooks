@@ -54,18 +54,33 @@ const port = 2020;
 
 app.use(express.json());
 
-app.get('*', (req, res) => {
-    //
-    console.log('get-', req.body);
-    res.send('Hello World!');
-});
-
-
 app.post('*', (req, res) => {
-    //
-    console.log('-', req.body);
+    if (!req.body?.text?.content) {
+        res.send('null');;
+    }
+    const data = req.body.text.content;
+    const lines = data.split('\n');
+    const result = lines.map(line => {
+        const match = line.match(/^(\w+)：(.+)$/);
+        if (match) {
+            return { [match[1]]: match[2] };
+        }
+        return {};
+    }).reduce((acc, obj) => {
+        return { ...acc, ...obj };
+    }, {});
+
+    console.log(result);
+
     res.send('Hello World!');
 });
+
+
+// app.post('*', (req, res) => {
+//     //
+//     console.log('-', req.body);
+//     res.send('Hello World!');
+// });
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
