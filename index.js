@@ -54,7 +54,7 @@ function createSignature(ticket, noncestr, timestamp, url) {
 }
 
 // 微信 JSSDK 签名接口
-app.get('/wechat-signature', async (req, res) => {
+app.get('/api/wechat-signature', async (req, res) => {
     const { url } = req.query;
 
     if (!url) {
