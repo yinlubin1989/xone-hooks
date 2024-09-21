@@ -3,7 +3,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 
 const app = express();
-const port = 3000;
+const port = 3002;
 
 // 微信配置
 const config = {
