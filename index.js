@@ -1,89 +1,80 @@
+const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
-const express = require('express');
-
-function generateSignedUrl(accessToken, secret) {
-    // 获取当前时间戳（毫秒）
-    const timestamp = Date.now();
-
-    // 生成签名
-    const sign = () => {
-        const stringToSign = `${timestamp}\n${secret}`;
-        const hash = crypto.createHmac('sha256', secret)
-                          .update(stringToSign)
-                          .digest('base64');
-        return encodeURIComponent(hash);
-    };
-
-    const signature = sign();
-
-    // 生成带有签名的完整 URL
-    const signedUrl = `https://oapi.dingtalk.com/robot/send?access_token=${accessToken}&timestamp=${timestamp}&sign=${signature}`;
-    
-    return signedUrl;
-}
-
-function sendDingMessage(payload) {
-    // 调用方法
-    const accessToken = 'b8350a5eeedbcee546b9feea67e858d5afd6862da7387e3766304a8973fc8211'; // 替换为你的access_token
-    const secret = 'SEC4b3fa97b85c629df0ee50211367c2514ab176be8927a17a389cb4db82c936e90'; // 替换为你的secret
-
-    const webhookUrl = generateSignedUrl(accessToken, secret);
-
-    const img = 'https://daxueui-cos.koocdn.com/feuploadcdnfiles/e08c44fd-bc9e-4fe7-bc3b-4df0890581a7.png'
-
-    const message = {
-        "msgtype": "markdown",
-        "markdown": {
-            "title": payload.title,
-            "text": `![screenshot](${img})`
-        }
-    };
-
-    axios.post(webhookUrl, message)
-        .then(response => {
-            console.log('图片发送成功:', response.data);
-        })
-        .catch(error => {
-            console.error('发送图片时出错:', error);
-        });
-}
 
 const app = express();
-const port = 2020;
+const port = 3000;
 
-app.use(express.json());
+// 微信配置
+const config = {
+    appId: 'wxa71e26dcd94cf235',
+    appSecret: '7665b550d499380c26977ca9d4f6de4f',
+    token: '',
+    ticket: '',
+    ticketExpires: 0 // ticket过期时间
+};
 
-app.post('*', (req, res) => {
-    if (!req.body?.text?.content) {
-        res.send('null');;
+// 获取微信 access_token
+async function getAccessToken() {
+    try {
+        const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${config.appId}&secret=${config.appSecret}`;
+        const response = await axios.get(url);
+        config.token = response.data.access_token;
+        console.log('AccessToken:', config.token);
+        return config.token;
+    } catch (error) {
+        console.error('获取 access_token 出错:', error);
     }
-    const lines = req.body.text.content.split('\n');
-    const result = lines.splice(1).map(line => {
-        const match = line.split('：');
-        if (match) {
-            return { [match[0]]: match[1] };
-        }
-        return {};
-    }).reduce((acc, obj) => {
-        return { ...acc, ...obj };
-    }, {});
-    result.title = lines[0]
-    sendDingMessage(result);
+}
 
-    res.send('ok');
+// 获取微信 jsapi_ticket
+async function getJsapiTicket() {
+    if (config.ticket && Date.now() < config.ticketExpires) {
+        return config.ticket; // 返回缓存的ticket
+    }
+    const token = await getAccessToken();
+    const url = `https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${token}&type=jsapi`;
+    try {
+        const response = await axios.get(url);
+        config.ticket = response.data.ticket;
+        config.ticketExpires = Date.now() + (response.data.expires_in - 60) * 1000; // 提前60秒过期
+        console.log('JsapiTicket:', config.ticket);
+        return config.ticket;
+    } catch (error) {
+        console.error('获取 jsapi_ticket 出错:', error);
+    }
+}
+
+// 生成签名
+function createSignature(ticket, noncestr, timestamp, url) {
+    const str = `jsapi_ticket=${ticket}&noncestr=${noncestr}&timestamp=${timestamp}&url=${url}`;
+    const hash = crypto.createHash('sha1');
+    hash.update(str);
+    return hash.digest('hex');
+}
+
+// 微信 JSSDK 签名接口
+app.get('/wechat-signature', async (req, res) => {
+    const { url } = req.query;
+
+    if (!url) {
+        return res.status(400).json({ error: '缺少必要参数：url' });
+    }
+
+    const ticket = await getJsapiTicket();
+    const noncestr = Math.random().toString(36).substr(2, 15);
+    const timestamp = Math.floor(Date.now() / 1000);
+
+    const signature = createSignature(ticket, noncestr, timestamp, url);
+
+    res.json({
+        appId: config.appId,
+        timestamp,
+        nonceStr: noncestr,
+        signature
+    });
 });
-
-
-// app.post('*', (req, res) => {
-//     //
-//     console.log('-', req.body);
-//     res.send('Hello World!');
-// });
 
 app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+    console.log(`Server running at http://localhost:${port}`);
 });
-
-
-
