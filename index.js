@@ -75,6 +75,28 @@ app.get('/api/wechat-signature', async (req, res) => {
     });
 });
 
+// 微信配置的 token
+const TOKEN = 'yinlubin';  // 这个 Token 是你自己在微信测试号管理后台填写的
+
+// 验证微信签名
+function checkSignature(query) {
+    const { signature, timestamp, nonce } = query;
+    const str = [TOKEN, timestamp, nonce].sort().join('');
+    const hash = crypto.createHash('sha1').update(str).digest('hex');
+    return hash === signature;
+}
+
+// 微信服务器验证接口
+app.get('/api/wechat', (req, res) => {
+    const { echostr } = req.query;
+    // 验证签名是否正确
+    if (checkSignature(req.query)) {
+        res.send(echostr); // 签名正确则返回echostr
+    } else {
+        res.send('签名验证失败');
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
