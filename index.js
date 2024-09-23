@@ -6,9 +6,16 @@ const app = express();
 const port = 3002;
 
 // 微信配置
+// const config = {
+//     appId: 'wxa71e26dcd94cf235',
+//     appSecret: '7665b550d499380c26977ca9d4f6de4f',
+//     token: '',
+//     ticket: '',
+//     ticketExpires: 0 // ticket过期时间
+// };
 const config = {
-    appId: 'wxa71e26dcd94cf235',
-    appSecret: '7665b550d499380c26977ca9d4f6de4f',
+    appId: 'wx9a33bdb7a412d445',
+    appSecret: 'b606895d8a15c065118627a25d5a52e6',
     token: '',
     ticket: '',
     ticketExpires: 0 // ticket过期时间
