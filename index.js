@@ -1,7 +1,6 @@
 const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
-const cors = require('cors');
 
 const app = express();
 const port = 3002;
@@ -15,8 +14,17 @@ const config = {
     ticketExpires: 0 // ticket过期时间
 };
 
-// 使用CORS中间件，允许所有域名访问
-app.use(cors());
+// 设置允许跨域的中间件
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    // 处理OPTIONS预检请求
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
 
 // 获取微信 access_token
 async function getAccessToken() {
