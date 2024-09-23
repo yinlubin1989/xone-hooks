@@ -1,18 +1,12 @@
 const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
+const cors = require('cors');
 
 const app = express();
 const port = 3002;
 
 // 微信配置
-// const config = {
-//     appId: 'wxa71e26dcd94cf235',
-//     appSecret: '7665b550d499380c26977ca9d4f6de4f',
-//     token: '',
-//     ticket: '',
-//     ticketExpires: 0 // ticket过期时间
-// };
 const config = {
     appId: 'wx9a33bdb7a412d445',
     appSecret: 'b606895d8a15c065118627a25d5a52e6',
@@ -20,6 +14,9 @@ const config = {
     ticket: '',
     ticketExpires: 0 // ticket过期时间
 };
+
+// 使用CORS中间件，允许所有域名访问
+app.use(cors());
 
 // 获取微信 access_token
 async function getAccessToken() {
