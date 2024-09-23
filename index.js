@@ -73,6 +73,8 @@ app.get('/api/wechat-signature', async (req, res) => {
         return res.status(400).json({ error: '缺少必要参数：url' });
     }
 
+    console.log('url请求', url)
+
     const ticket = await getJsapiTicket();
     const noncestr = Math.random().toString(36).substr(2, 15);
     const timestamp = Math.floor(Date.now() / 1000);
